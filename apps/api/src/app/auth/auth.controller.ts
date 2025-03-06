@@ -16,7 +16,7 @@ import {
   Logger,
   Header,
 } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
+import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity, SubscriberRepository } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
 import { IJwtPayload } from '@novu/shared';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
@@ -60,7 +60,8 @@ export class AuthController {
     private switchOrganizationUsecase: SwitchOrganization,
     private memberRepository: MemberRepository,
     private passwordResetRequestUsecase: PasswordResetRequest,
-    private passwordResetUsecase: PasswordReset
+    private passwordResetUsecase: PasswordReset,
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   @Get('/github')
@@ -194,5 +195,28 @@ export class AuthController {
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
 
     return await this.authService.getSignedToken(user, organizationId, member as MemberEntity, environmentId);
+  }
+
+  @Get('/subscriber-token/:subscriberId/:environmentId')
+  async getSubscriberToken(
+    @Param('subscriberId') subscriberId: string,
+    @Param('environmentId') environmentId: string
+  ): Promise<{ token: string }> {
+    if (!subscriberId.trim() || !environmentId.trim()) {
+      throw new BadRequestException('Invalid subscriber or environment ID');
+    }
+
+    const subscriber = await this.subscriberRepository.findBySubscriberId(
+      environmentId,
+      subscriberId
+    );
+
+    if (!subscriber) {
+      throw new NotFoundException(`Subscriber with Id ${subscriberId} not found`);
+    }
+
+    const token = await this.authService.getSubscriberWidgetToken(subscriber);
+
+    return { token };
   }
 }
