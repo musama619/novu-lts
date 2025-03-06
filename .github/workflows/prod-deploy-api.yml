@@ -43,8 +43,8 @@ jobs:
           node-version: 20.8.1
           cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # - name: Install dependencies
+      #   run: pnpm install --frozen-lockfile
 
       - name: Setup Docker
         uses: crazy-max/ghaction-setup-docker@v2
@@ -78,11 +78,12 @@ jobs:
             --cache-from type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/cache:build-cache-${{ env.SERVICE_NAME }}-community
             --cache-to type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/cache:build-cache-${{ env.SERVICE_NAME }}-community,mode=max
             --platform=linux/amd64,linux/arm64 --provenance=false
-            --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
           cd apps/$SERVICE_COMMON_NAME
           pnpm run docker:build
           docker images
+          docker buildx build --push -t ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }} $DOCKER_BUILD_ARGUMENTS
+          docker buildx build --push -t ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest $DOCKER_BUILD_ARGUMENTS
 
       - name: Find Built Docker Image
         run: docker images
