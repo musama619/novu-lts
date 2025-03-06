@@ -1,8 +1,8 @@
 FROM node:20-alpine3.19 as dev_base
 RUN apk add g++ make py3-pip
 
+# Remove Enterprise dependencies
 ARG BULL_MQ_PRO_TOKEN
-ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
 ENV NX_DAEMON=false
 
 RUN npm i pm2 -g
@@ -20,14 +20,12 @@ COPY --chown=1000:1000 ./meta .
 COPY --chown=1000:1000 ./deps .
 COPY --chown=1000:1000 ./pkg .
 
-RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
-RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
-RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then cp .npmrc-cloud .npmrc  ; fi
+# Skip Enterprise Edition
+RUN echo "Building Community Edition Only"
 
-RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
- pnpm install --filter "musama619" --filter "{${PACKAGE_PATH}}..."\
- --frozen-lockfile\
- --unsafe-perm
+# Install only required dependencies
+RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store \
+ pnpm install --filter "@novu/api" --frozen-lockfile --unsafe-perm
 
 RUN NODE_ENV=production NX_DAEMON=false pnpm build:api
 
@@ -45,14 +43,13 @@ FROM dev AS assets
 
 WORKDIR /usr/src/app
 
-# Remove all dependencies so later we can only install prod dependencies without devDependencies
+# Remove all dependencies so later we can only install prod dependencies
 RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------
 FROM dev_base AS prod
 
 ARG PACKAGE_PATH
-
 ENV CI=true
 
 WORKDIR /usr/src/app
@@ -62,12 +59,10 @@ COPY --chown=1000:1000 ./meta .
 # Get the build artifacts that only include dist folders
 COPY --chown=1000:1000 --from=assets /usr/src/app .
 
-RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
- pnpm install --filter "{${PACKAGE_PATH}}..." \
- --frozen-lockfile \
- --unsafe-perm
+RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store \
+ pnpm install --filter "@novu/api" --frozen-lockfile --unsafe-perm
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
 WORKDIR /usr/src/app/apps/api
-CMD [ "pm2-runtime","start", "dist/main.js" ]
+CMD [ "pm2-runtime", "start", "dist/main.js" ]
