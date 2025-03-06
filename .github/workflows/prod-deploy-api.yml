@@ -22,6 +22,10 @@ jobs:
       deployments: write
       id-token: write
     steps:
+
+      - name: Git Checkout
+        uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup-project
         with:
           submodules: ${{ contains (matrix.name,'-ee') }}
