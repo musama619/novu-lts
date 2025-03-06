@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: ['novu/api']
+        name: ['novu-90/api']
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4

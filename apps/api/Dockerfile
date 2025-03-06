@@ -24,8 +24,10 @@ COPY --chown=1000:1000 ./pkg .
 RUN echo "Building Community Edition Only"
 
 # Install only required dependencies
-RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store \
- pnpm install --filter "@novu/api" --frozen-lockfile --unsafe-perm
+RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
+ pnpm install --filter "musama619" --filter "{${PACKAGE_PATH}}..."\
+ --frozen-lockfile \
+ --unsafe-perm
 
 RUN NODE_ENV=production NX_DAEMON=false pnpm build:api
 
@@ -59,8 +61,10 @@ COPY --chown=1000:1000 ./meta .
 # Get the build artifacts that only include dist folders
 COPY --chown=1000:1000 --from=assets /usr/src/app .
 
-RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store \
- pnpm install --filter "@novu/api" --frozen-lockfile --unsafe-perm
+RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
+ pnpm install --filter "{${PACKAGE_PATH}}..." \
+ --frozen-lockfile \
+ --unsafe-perm
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
