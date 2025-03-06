@@ -426,6 +426,16 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+    optionalDependencies:
+      '@novu/ee-auth':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/auth
+      '@novu/ee-billing':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/billing
+      '@novu/ee-translation':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -899,6 +909,13 @@ importers:
       zod:
         specifier: ^3.22.4
         version: 3.22.4
+    optionalDependencies:
+      '@novu/ee-billing-web':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/billing-web
+      '@novu/ee-translation-web':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/translation-web
     devDependencies:
       '@babel/polyfill':
         specifier: ^7.12.1
@@ -1427,6 +1444,13 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+    optionalDependencies:
+      '@novu/ee-billing':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/billing
+      '@novu/ee-translation':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
