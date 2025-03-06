@@ -34,17 +34,21 @@ jobs:
           echo "REGISTRY_OWNER=musama619" >> $GITHUB_ENV
           echo "This is the service name: $SERVICE_NAME and release version: $LATEST_VERSION"
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: ./.github/actions/setup-project
         with:
-          node-version: 20.8.1
-          cache: 'pnpm'
+          submodules: ${{ contains (matrix.name,'-ee') }}
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # - name: Install pnpm
+      #   uses: pnpm/action-setup@v3
+
+      # - name: Use Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 20.8.1
+      #     cache: 'pnpm'
+
+      # - name: Install dependencies
+      #   run: pnpm install --frozen-lockfile
 
       - name: Setup Docker
         uses: crazy-max/ghaction-setup-docker@v2
