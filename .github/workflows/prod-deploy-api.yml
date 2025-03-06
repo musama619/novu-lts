@@ -1,4 +1,4 @@
-name: Deploy PROD API (New Docker Deployment)
+name: Deploy PROD API
 
 on:
   workflow_dispatch:
@@ -16,11 +16,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: ['novu-0.24.0/api']
+        name: ['novu-lts/api']
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
-
+      
       - name: Variables
         shell: bash
         run: |
@@ -50,19 +50,26 @@ jobs:
         uses: crazy-max/ghaction-setup-docker@v2
         with:
           version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
 
       - name: build api
         run: pnpm build:api --skip-nx-cache
+      
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: linux/amd64,linux/arm64
-
+      
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: 'image=moby/buildkit:v0.12.4'
-
+      
       - uses: ./.github/actions/free-space
         name: Extend space in Action Container
 
@@ -71,27 +78,28 @@ jobs:
         with:
           registry: ghcr.io
           username: musama619
-          password: ${{ secrets.NOVU_MD_TOKEN }}
+          password: ${{ secrets.NOVU_TOKEN_FN }}
 
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
+      - name: Build ${{ env.SERVICE_NAME }} Community Docker Image
+        shell: bash
         env:
-          REGISTRY_OWNER: musama619
-          DOCKER_NAME: ${{matrix.name}}
-          IMAGE_TAG: ${{ github.sha }}
-          GH_ACTOR: ${{ github.actor }}
-          GH_PASSWORD: ${{ secrets.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 }}
+          DOCKER_BUILD_ARGUMENTS: >
+            --cache-from type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/cache:build-cache-${{ env.SERVICE_NAME }}-community
+            --cache-to type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/cache:build-cache-${{ env.SERVICE_NAME }}-community,mode=max
+            --platform=linux/amd64,linux/arm64 --provenance=false
+            --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
-          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - -t novu-api --load --platform=linux/amd64,linux/arm64 --provenance=false
-          docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
-          docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
-          docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          cd apps/api
+          pnpm run docker:build
+          docker images
 
-          docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1337/v1/health-check | grep 'ok'
+      - name: Find Built Docker Image
+        run: docker images
 
-          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
-          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
-          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
+      - name: Tag and Push Docker Image
+        shell: bash
+        run: |
+          docker tag novu-api ghcr.io/musama619/${{ matrix.name }}:${{ env.LATEST_VERSION }}
+          docker tag novu-api ghcr.io/musama619/${{ matrix.name }}:latest
+          docker push ghcr.io/musama619/${{ matrix.name }}:${{ env.LATEST_VERSION }}
+          docker push ghcr.io/musama619/${{ matrix.name }}:latest
