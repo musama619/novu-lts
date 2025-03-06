@@ -69,7 +69,7 @@ jobs:
         with:
           registry: ghcr.io
           username: musama619
-          password: ${{ secrets.NOVU_TOKEN_FN }}
+          password: ${{ secrets.NOVU_MD_TOKEN }}
 
       - name: Build ${{ env.SERVICE_NAME }} Community Docker Image
         shell: bash
