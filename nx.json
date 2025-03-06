@@ -7,40 +7,15 @@
       "options": {
         "cacheableOperations": ["build", "test", "lint", "package", "prepare"],
         "canTrackAnalytics": false,
-        "accessToken": "N2EyNDhhMGUtYmJkNS00YzQ5LTg5NDYtODg5ZmE2NDE5YWNmfHJlYWQtd3JpdGU="
+        "accessToken": "ZDZlMzQzMjEtMmNjNS00YzE2LTgyZTktYmY3MThkOTZhYTM2fHJlYWQtd3JpdGU="
       }
     }
   },
   "targetDependencies": {
-    "build": [
-      {
-        "target": "build",
-        "inputs": ["!{projectRoot}/enterprise/**/*"],
-        "projects": "dependencies"
-      }
-    ],
-    "prepare": [
-      {
-        "target": "prepare",
-        "projects": "dependencies"
-      }
-    ],
-    "package": [
-      {
-        "target": "package",
-        "projects": "dependencies"
-      }
-    ]
+    "build": [{ "target": "build", "inputs": ["!{projectRoot}/enterprise/**/*"], "projects": "dependencies" }],
+    "prepare": [{ "target": "prepare", "projects": "dependencies" }],
+    "package": [{ "target": "package", "projects": "dependencies" }]
   },
-  "affected": {
-    "defaultBase": "main"
-  },
-  "targetDefaults": {
-    "build-ee": {
-      "dependsOn": ["^build-ee"]
-    },
-    "build": {
-      "dependsOn": ["^build"]
-    }
-  }
+  "affected": { "defaultBase": "main" },
+  "targetDefaults": { "build-ee": { "dependsOn": ["^build-ee"] }, "build": { "dependsOn": ["^build"] } }
 }
